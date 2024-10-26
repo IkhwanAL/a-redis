@@ -4,8 +4,11 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"net"
+	"strconv"
 	"strings"
+	"time"
 )
 
 var MaxBuffer int = 4096
@@ -91,6 +94,21 @@ func (s *Server) runMessage(conn net.Conn, requests []byte) error {
 
 func (s *Server) Set(args []string) string {
 	s.Database.Set(args[0], args[1])
+
+	if args[2] == "px" {
+		ttl, err := strconv.Atoi(args[3])
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// TODO: How To Make it Persist If the server Shutdown
+		// Run In Background
+		go func() {
+			<-time.After(time.Duration(ttl) * time.Millisecond)
+			s.Database.Unset(args[0])
+		}()
+	}
 
 	return ParseGenerateRESP("OK")
 }

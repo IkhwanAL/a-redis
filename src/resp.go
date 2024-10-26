@@ -21,8 +21,6 @@ func ParseReadRESP(requests []byte) []string {
 
 	totalCommand := -1
 
-	var cmdLengthSlice []int
-
 	var messages []string
 
 	for scanner.Scan() {
@@ -38,7 +36,6 @@ func ParseReadRESP(requests []byte) []string {
 		}
 
 		if buffers[0] == totalCommandCharLengthIndicator {
-			cmdLengthSlice = append(cmdLengthSlice, int(buffers[1]-'0'))
 			continue
 		}
 
