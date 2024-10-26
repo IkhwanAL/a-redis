@@ -18,7 +18,7 @@ func main() {
 
 	s := Srv.Server{
 		Port: 6379,
-		Data: Srv.Database{
+		Database: Srv.Database{
 			Data: make(map[string]interface{}),
 		},
 		Config: map[string]interface{}{

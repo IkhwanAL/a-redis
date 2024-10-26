@@ -12,7 +12,7 @@ var totalCommandCharLengthIndicator = byte('$')
 
 var crlf = "\r\n"
 
-func ParseReadRESP(requests []byte) ([]int, []string) {
+func ParseReadRESP(requests []byte) []string {
 	var bufRead bytes.Buffer
 
 	bufRead.Write(requests)
@@ -23,7 +23,7 @@ func ParseReadRESP(requests []byte) ([]int, []string) {
 
 	var cmdLengthSlice []int
 
-	var command []string
+	var messages []string
 
 	for scanner.Scan() {
 		buffers := scanner.Bytes()
@@ -42,8 +42,8 @@ func ParseReadRESP(requests []byte) ([]int, []string) {
 			continue
 		}
 
-		if (len(command)) != totalCommand {
-			command = append(command, scanner.Text())
+		if (len(messages)) != totalCommand {
+			messages = append(messages, scanner.Text())
 		}
 	}
 
@@ -51,7 +51,7 @@ func ParseReadRESP(requests []byte) ([]int, []string) {
 		log.Fatal(err)
 	}
 
-	return cmdLengthSlice, command
+	return messages
 }
 
 func ParseGenerateRESP(value string) string {
