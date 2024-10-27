@@ -83,6 +83,8 @@ func (s *Server) runMessage(conn net.Conn, requests []byte) error {
 		resp = s.Set(messages[1:])
 	case "get":
 		resp = s.Get(messages[1:])
+	case "config":
+		resp = s.GetConfig(messages[2:])
 	default:
 		return fmt.Errorf("unknow command")
 	}
@@ -117,4 +119,16 @@ func (s *Server) Get(args []string) string {
 	value := s.Database.Get(args[0])
 
 	return ParseGenerateRESP(value)
+}
+
+func (s *Server) GetConfig(args []string) string {
+	key := args[0]
+
+	value, ok := s.Config[key]
+
+	if !ok {
+		return ParseGenerateRESPError("-1")
+	}
+
+	return ParseGenerateRESP(*value.(*string))
 }
