@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	fmt.Print("Run Server 6379")
+	fmt.Print("Run Server 6379\n")
 
 	dir := flag.String("dir", "", "the directory where RDB Store")
 	dbfilename := flag.String("dbfilename", "", "the filename for RDB Store")
@@ -26,6 +26,10 @@ func main() {
 			"dbfilename": dbfilename,
 		},
 	}
+
+	Srv.Store(&s)
+
+	Srv.Retreive(&s)
 
 	s.Run(context.Background())
 }
