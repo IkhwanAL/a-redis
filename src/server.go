@@ -97,7 +97,7 @@ func (s *Server) runMessage(conn net.Conn, requests []byte) error {
 func (s *Server) Set(args []string) string {
 	s.Database.Set(args[0], args[1])
 
-	if args[2] == "px" {
+	if len(args) > 2 && args[2] == "px" {
 		ttl, err := strconv.Atoi(args[3])
 
 		if err != nil {
