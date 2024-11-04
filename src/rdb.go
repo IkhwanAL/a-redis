@@ -11,7 +11,7 @@ import (
 )
 
 func StoreRDB(srv *Server) {
-	ticker := time.NewTicker(time.Duration(5) * time.Minute)
+	ticker := time.NewTicker(time.Duration(10) * time.Second)
 	done := make(chan bool)
 
 	go func() {
@@ -55,8 +55,6 @@ func Store(srv *Server) {
 		return
 	}
 
-	// Open File And Store The Value
-
 	dbfilename := *srv.Config["dbfilename"].(*string)
 
 	filePath := filepath.Join(".", dir, dbfilename)
@@ -85,10 +83,9 @@ func Retreive(srv *Server) {
 
 	filePath := filepath.Join(".", dir, dbfilename)
 
-	file, err := os.OpenFile(filePath, os.O_RDONLY, 0777)
+	file, err := os.OpenFile(filePath, os.O_RDONLY|os.O_CREATE, 0777)
 
 	if err != nil {
-		log.Fatal(err)
 		return
 	}
 
@@ -105,13 +102,15 @@ func Retreive(srv *Server) {
 		}
 	}
 
-	var data map[string]interface{}
+	var data map[string]map[string]interface{}
 
 	err = json.Unmarshal(buffer[:readLength], &data)
 
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// Update Expire Time Value
 
 	srv.Database.Data = data
 }

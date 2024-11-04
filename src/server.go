@@ -104,8 +104,13 @@ func (s *Server) Set(args []string) string {
 			log.Fatal(err)
 		}
 
-		// TODO: How To Make it Persist If the server Shutdown
-		// Run In Background
+		t := time.Now()
+
+		t = t.Add(time.Duration(ttl) * time.Millisecond)
+
+		s.Database.SetSetting(args[0], "EXPIRETM", t.Format(time.RFC3339))
+		s.Database.SetSetting(args[0], "TTL", ttl)
+
 		go func() {
 			<-time.After(time.Duration(ttl) * time.Millisecond)
 			s.Database.Unset(args[0])
