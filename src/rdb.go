@@ -11,7 +11,7 @@ import (
 )
 
 func StoreRDB(srv *Server) {
-	ticker := time.NewTicker(time.Duration(10) * time.Second)
+	ticker := time.NewTicker(time.Duration(10) * time.Minute)
 	done := make(chan bool)
 
 	go func() {
@@ -110,7 +110,7 @@ func Retreive(srv *Server) {
 		log.Fatal(err)
 	}
 
-	// Update Expire Time Value
+	// TODO: Update Expire Time Value
 
 	srv.Database.Data = data
 }

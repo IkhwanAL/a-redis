@@ -2,10 +2,12 @@ package src
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"log"
 	"net"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -20,8 +22,28 @@ type Server struct {
 	Config   map[string]interface{}
 }
 
+func loadServerCertAndKey() (string, string) {
+	serverKeyPath := filepath.Join("..", "..", "..", "server.key")
+	serverCert := filepath.Join("..", "..", "..", "server.crt")
+
+	return serverCert, serverKeyPath
+}
+
+// Future Problem How can i tell client doing a request with / without tls
+// Local Server Certificate Not Client Certificate
 func (s *Server) Run(ctx context.Context) error {
-	listener, err := net.Listen("tcp", "0.0.0.0:6379")
+	certPath, privateKeyPath := loadServerCertAndKey()
+
+	cert, err := tls.LoadX509KeyPair(certPath, privateKeyPath)
+
+	if err != nil {
+		return fmt.Errorf("failed to Load Certificate: %s", err)
+	}
+
+	listener, err := tls.Listen("tcp", ":6379", &tls.Config{
+		Certificates: []tls.Certificate{cert},
+		MinVersion:   tls.VersionTLS12,
+	})
 
 	if err != nil {
 		return fmt.Errorf("failed to bind with port: %d", s.Port)
@@ -57,6 +79,7 @@ func (s *Server) handleConnection(conn net.Conn) error {
 			}
 
 			fmt.Printf("Error Reading from Client: %s", err)
+
 			return nil
 		}
 
@@ -85,6 +108,8 @@ func (s *Server) runMessage(conn net.Conn, requests []byte) error {
 		resp = s.Get(messages[1:])
 	case "config":
 		resp = s.GetConfig(messages[2:])
+	case "info":
+		resp = ParseGenerateRESP("PONG")
 	default:
 		return fmt.Errorf("unknow command")
 	}

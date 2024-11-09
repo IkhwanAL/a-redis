@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	fmt.Print("Run Server 6379\n")
+	fmt.Print("Run Server 6380\n")
 
 	dir := flag.String("dir", "", "the directory where RDB Store")
 	dbfilename := flag.String("dbfilename", "", "the filename for RDB Store")
@@ -17,7 +17,7 @@ func main() {
 	flag.Parse()
 
 	s := Srv.Server{
-		Port: 6379,
+		Port: 6380,
 		Database: Srv.Database{
 			Data: make(map[string]map[string]interface{}),
 		},
