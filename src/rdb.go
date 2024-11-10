@@ -1,6 +1,8 @@
 package src
 
 import (
+	"bytes"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -30,7 +32,19 @@ func StoreRDB(srv *Server) {
 func Store(srv *Server) {
 	// Convert Map into binary little endian
 
-	valueToSave := srv.Database.Data
+	// valueToSave := srv.Database.Data
+
+	valueToSave := map[string]map[string]interface{}{
+		"HASD": {
+			"VALUE": "AKD",
+		},
+		"JJK": {
+			"VALUE": "jjk",
+		},
+		"ASD": {
+			"VALUE": "asd",
+		},
+	}
 
 	if len(valueToSave) == 0 {
 		return
@@ -40,7 +54,6 @@ func Store(srv *Server) {
 
 	if err != nil {
 		log.Fatal(err)
-		// Panic / Restart
 		return
 	}
 
@@ -68,7 +81,11 @@ func Store(srv *Server) {
 
 	defer file.Close()
 
-	_, err = file.Write(value)
+	bytesBuffer := new(bytes.Buffer)
+
+	binary.Write(bytesBuffer, binary.LittleEndian, value)
+
+	_, err = bytesBuffer.WriteTo(file)
 
 	if err != nil {
 		log.Fatal(err)
