@@ -32,19 +32,7 @@ func StoreRDB(srv *Server) {
 func Store(srv *Server) {
 	// Convert Map into binary little endian
 
-	// valueToSave := srv.Database.Data
-
-	valueToSave := map[string]map[string]interface{}{
-		"HASD": {
-			"VALUE": "AKD",
-		},
-		"JJK": {
-			"VALUE": "jjk",
-		},
-		"ASD": {
-			"VALUE": "asd",
-		},
-	}
+	valueToSave := srv.Database.Data
 
 	if len(valueToSave) == 0 {
 		return

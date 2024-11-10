@@ -27,11 +27,9 @@ func main() {
 		},
 	}
 
-	Srv.Store(&s)
-
 	Srv.Retreive(&s)
 
-	// Srv.StoreRDB(&s)
+	Srv.StoreRDB(&s)
 
 	s.Run(context.Background())
 }
