@@ -32,6 +32,40 @@ func loadServerCertAndKey() (string, string) {
 // Future Problem How can i tell client doing a request with / without tls
 // Local Server Certificate Not Client Certificate
 func (s *Server) Run(ctx context.Context) error {
+
+	if s.Port == 6380 {
+		return s.runSecureConnection(ctx)
+	}
+
+	return s.runUnSecureConnection(ctx)
+}
+
+func (s *Server) runUnSecureConnection(ctx context.Context) error {
+	port := fmt.Sprintf(":%d", s.Port)
+
+	listener, err := net.Listen("tcp", port)
+
+	if err != nil {
+		return fmt.Errorf("failed to bind with port: %d", s.Port)
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+			conn, err := listener.Accept()
+
+			if err != nil {
+				return fmt.Errorf("error accepting connection: %w", err)
+			}
+
+			go s.handleConnection(conn)
+		}
+	}
+}
+
+func (s *Server) runSecureConnection(ctx context.Context) error {
 	certPath, privateKeyPath := loadServerCertAndKey()
 
 	cert, err := tls.LoadX509KeyPair(certPath, privateKeyPath)
@@ -40,7 +74,9 @@ func (s *Server) Run(ctx context.Context) error {
 		return fmt.Errorf("failed to Load Certificate: %s", err)
 	}
 
-	listener, err := tls.Listen("tcp", ":6379", &tls.Config{
+	port := fmt.Sprintf(":%d", s.Port)
+
+	listener, err := tls.Listen("tcp", port, &tls.Config{
 		Certificates: []tls.Certificate{cert},
 		MinVersion:   tls.VersionTLS12,
 	})
