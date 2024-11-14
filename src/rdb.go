@@ -13,7 +13,7 @@ import (
 )
 
 func StoreRDB(srv *Server) {
-	ticker := time.NewTicker(time.Duration(10) * time.Minute)
+	ticker := time.NewTicker(time.Duration(1) * time.Hour)
 	done := make(chan bool)
 
 	go func() {

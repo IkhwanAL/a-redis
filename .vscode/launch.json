@@ -11,10 +11,14 @@
             "mode": "auto",
             "program": "${workspaceFolder}/main.go",
             "args": [
+                "--port",
+                "6379",
                 "--dir",
                 "/tmp/redis-files",
                 "--dbfilename",
-                "redis.rdb"
+                "redis.rdb",
+                "--replicaOf",
+                "192.168.1.1 6379"
             ]
         }
     ]

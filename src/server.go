@@ -22,19 +22,12 @@ type Server struct {
 	Config   map[string]interface{}
 }
 
-func loadServerCertAndKey() (string, string) {
-	serverKeyPath := filepath.Join("..", "..", "..", "server.key")
-	serverCert := filepath.Join("..", "..", "..", "server.crt")
-
-	return serverCert, serverKeyPath
-}
-
 // Future Problem How can i tell client doing a request with / without tls
 // Local Server Certificate Not Client Certificate
 func (s *Server) Run(ctx context.Context) error {
 
 	if s.Port == 6380 {
-		return s.runSecureConnection(ctx)
+		return s.runServerSecureConnection(ctx)
 	}
 
 	return s.runUnSecureConnection(ctx)
@@ -65,7 +58,15 @@ func (s *Server) runUnSecureConnection(ctx context.Context) error {
 	}
 }
 
-func (s *Server) runSecureConnection(ctx context.Context) error {
+func loadServerCertAndKey() (string, string) {
+	// Need to accept cli option to read server and server certificate
+	serverKeyPath := filepath.Join("..", "..", "..", "server.key")
+	serverCert := filepath.Join("..", "..", "..", "server.crt")
+
+	return serverCert, serverKeyPath
+}
+
+func (s *Server) runServerSecureConnection(ctx context.Context) error {
 	certPath, privateKeyPath := loadServerCertAndKey()
 
 	cert, err := tls.LoadX509KeyPair(certPath, privateKeyPath)
@@ -145,7 +146,7 @@ func (s *Server) runMessage(conn net.Conn, requests []byte) error {
 	case "config":
 		resp = s.GetConfig(messages[2:])
 	case "info":
-		resp = ParseGenerateRESP("PONG")
+		resp = ParseGenerateRESP("role:master")
 	default:
 		return fmt.Errorf("unknow command")
 	}
@@ -182,6 +183,10 @@ func (s *Server) Set(args []string) string {
 }
 
 func (s *Server) Get(args []string) string {
+	if s.Config["isAReplica"].(bool) {
+		return ParseGenerateRESPError("-1")
+	}
+
 	value := s.Database.Get(args[0])
 
 	return ParseGenerateRESP(value)
