@@ -10,9 +10,9 @@ import (
 
 func main() {
 
-	dir := flag.String("dir", "", "the directory where RDB Store")
-	dbfilename := flag.String("dbfilename", "", "the filename for RDB Store")
-	replicaOf := flag.String("replicaof", "", "set replica")
+	dir := flag.String("dir", "/tmp/redis-files", "the directory where RDB Store")
+	dbfilename := flag.String("dbfilename", "redis.rdb", "the filename for RDB")
+	replicaOf := flag.String("replicaof", "master", "set replica")
 	port := flag.Int("port", 6379, "port to connect")
 
 	flag.Parse()
@@ -21,11 +21,11 @@ func main() {
 
 	fmt.Printf("Run Server %d\n", *port)
 
-	if *replicaOf != "" {
-		replica := Srv.NewReplication(*replicaOf)
-
+	replica := Srv.NewReplication("8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb", *replicaOf, 0)
+	if replica.Role != Srv.MASTER {
 		replica.Run(context.Background())
 	}
+	fmt.Print(replica.Role)
 
 	s := Srv.Server{
 		Port: *port,
