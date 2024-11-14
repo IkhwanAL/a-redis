@@ -33,11 +33,8 @@ func (r *Replication) Run(ctx context.Context) error {
 func (r *Replication) handleConnection(conn net.Conn) error {
 	defer conn.Close()
 
-	buf := make([]byte, 1024*4)
+	// buf := make([]byte, 1024*4)
 	// TODO: Create A Handshake Between Primary And Slave
-	for {
-		conn.Read(buf)
-	}
 }
 
 func NewReplication(address string) Replication {
