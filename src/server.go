@@ -22,18 +22,16 @@ type Server struct {
 	Config   map[string]interface{}
 }
 
-// Future Problem How can i tell client doing a request with / without tls
-// Local Server Certificate Not Client Certificate
-func (s *Server) Run(ctx context.Context) error {
+func (s *Server) Run(ctx context.Context, replica *Replication) error {
 
 	if s.Port == 6380 {
-		return s.runServerSecureConnection(ctx)
+		return s.runServerSecureConnection(ctx, replica)
 	}
 
-	return s.runUnSecureConnection(ctx)
+	return s.runUnSecureConnection(ctx, replica)
 }
 
-func (s *Server) runUnSecureConnection(ctx context.Context) error {
+func (s *Server) runUnSecureConnection(ctx context.Context, replica *Replication) error {
 	port := fmt.Sprintf(":%d", s.Port)
 
 	listener, err := net.Listen("tcp", port)
@@ -53,7 +51,7 @@ func (s *Server) runUnSecureConnection(ctx context.Context) error {
 				return fmt.Errorf("error accepting connection: %w", err)
 			}
 
-			go s.handleConnection(conn)
+			go s.handleConnection(conn, replica)
 		}
 	}
 }
@@ -66,7 +64,7 @@ func loadServerCertAndKey() (string, string) {
 	return serverCert, serverKeyPath
 }
 
-func (s *Server) runServerSecureConnection(ctx context.Context) error {
+func (s *Server) runServerSecureConnection(ctx context.Context, replica *Replication) error {
 	certPath, privateKeyPath := loadServerCertAndKey()
 
 	cert, err := tls.LoadX509KeyPair(certPath, privateKeyPath)
@@ -97,12 +95,12 @@ func (s *Server) runServerSecureConnection(ctx context.Context) error {
 				return fmt.Errorf("error accepting connection: %w", err)
 			}
 
-			go s.handleConnection(conn)
+			go s.handleConnection(conn, replica)
 		}
 	}
 }
 
-func (s *Server) handleConnection(conn net.Conn) error {
+func (s *Server) handleConnection(conn net.Conn, replica *Replication) error {
 	defer conn.Close()
 
 	buf := make([]byte, MaxBuffer)
@@ -120,7 +118,7 @@ func (s *Server) handleConnection(conn net.Conn) error {
 			return nil
 		}
 
-		err = s.runMessage(conn, buf)
+		err = s.runMessage(conn, buf, replica)
 
 		if err != nil {
 			return fmt.Errorf("error running a command: %w", err)
@@ -129,7 +127,7 @@ func (s *Server) handleConnection(conn net.Conn) error {
 	}
 }
 
-func (s *Server) runMessage(conn net.Conn, requests []byte) error {
+func (s *Server) runMessage(conn net.Conn, requests []byte, replica *Replication) error {
 	messages := ParseReadRESP(requests)
 
 	cmd := strings.ToLower(messages[0])
@@ -146,7 +144,11 @@ func (s *Server) runMessage(conn net.Conn, requests []byte) error {
 	case "config":
 		resp = s.GetConfig(messages[2:])
 	case "info":
-		resp = ParseGenerateRESP("role:master")
+		role := fmt.Sprintf("role:%s", replica.Role)
+		replicaId := fmt.Sprintf("master_replid:%s", replica.ReplicaId)
+		offset := fmt.Sprintf("master_repl_offset:%d", replica.offset)
+
+		resp = ParseGenerateMultipleValue(role, replicaId, offset)
 	default:
 		return fmt.Errorf("unknow command")
 	}

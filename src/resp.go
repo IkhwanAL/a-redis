@@ -58,6 +58,34 @@ func ParseGenerateRESP(value string) string {
 	return fmt.Sprintf("$%d%s%s%s", lengthOfValue, crlf, value, crlf)
 }
 
+func ParseGenerateMultipleValue(multipleValue ...string) string {
+	var response string
+
+	lengthValue := 0
+
+	for _, value := range multipleValue {
+		tmp := fmt.Sprintf("%s%s", value, crlf)
+		len := len(value)
+
+		response += tmp
+		lengthValue += len + 2
+	}
+
+	return fmt.Sprintf("$%d%s%s%s", lengthValue, crlf, response, crlf)
+}
+
+func ParseGenerateArrayValueRESP(arrayValue []string) string {
+	reponses := fmt.Sprintf("*%d%s", len(arrayValue), crlf)
+
+	for _, value := range arrayValue {
+		tmp := fmt.Sprintf("$%d%s%s%s", len(value), crlf, value, crlf)
+
+		reponses += tmp
+	}
+
+	return reponses
+}
+
 func ParseGenerateRESPError(message string) string {
 	return fmt.Sprintf("$%s%s", message, crlf)
 }
