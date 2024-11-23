@@ -28,7 +28,7 @@
             "args": [
                 "--port",
                 "6378",
-                "replicaof",
+                "--replicaof",
                 "localhost:6379"
             ]
         }

@@ -137,6 +137,8 @@ func (s *Server) runMessage(conn net.Conn, requests []byte, replica *Replication
 	switch cmd {
 	case "ping":
 		resp = ParseGenerateRESP("PONG")
+	case "replcone":
+		resp = ParseGenerateRESP("+OK")
 	case "set":
 		resp = s.Set(messages[1:])
 	case "get":
@@ -149,6 +151,11 @@ func (s *Server) runMessage(conn net.Conn, requests []byte, replica *Replication
 		offset := fmt.Sprintf("master_repl_offset:%d", replica.offset)
 
 		resp = ParseGenerateMultipleValue(role, replicaId, offset)
+	case "psync":
+		replicaId := RandomReplciateSeedId()
+		offset := 0
+
+		resp = fmt.Sprintf("+FULLRESYNC %s %s\r\n", replicaId, strconv.Itoa(offset))
 	default:
 		return fmt.Errorf("unknow command")
 	}

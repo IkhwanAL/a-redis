@@ -9,6 +9,7 @@ import (
 
 var totalCommandLengthIndicator = byte('*')
 var totalCommandCharLengthIndicator = byte('$')
+var simpleStringIndicator = byte('+')
 
 var crlf = "\r\n"
 
@@ -36,6 +37,11 @@ func ParseReadRESP(requests []byte) []string {
 		}
 
 		if buffers[0] == totalCommandCharLengthIndicator {
+			continue
+		}
+
+		if buffers[0] == simpleStringIndicator {
+			messages = append(messages, string(buffers[1:]))
 			continue
 		}
 
@@ -71,10 +77,11 @@ func ParseGenerateMultipleValue(multipleValue ...string) string {
 		lengthValue += len + 2
 	}
 
+	// Add One Crlf for Redis Cli Accept The Message
 	return fmt.Sprintf("$%d%s%s%s", lengthValue, crlf, response, crlf)
 }
 
-func ParseGenerateArrayValueRESP(arrayValue []string) string {
+func ParseGenerateArrayValueRESP(arrayValue ...string) string {
 	reponses := fmt.Sprintf("*%d%s", len(arrayValue), crlf)
 
 	for _, value := range arrayValue {

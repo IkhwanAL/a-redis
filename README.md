@@ -10,6 +10,10 @@ how to make the key:value removed if the expiry is runout
     "exp": "in miliseconds" --> How do i get left over time
 }
 
+
+// Future
+Logging In Case Error (Store in file)
+
 // Current State
 
-Try To Create A Replication Where it can Listen And Dial 
+Next Handshake

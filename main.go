@@ -4,25 +4,9 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"math/rand"
-	"time"
 
 	Srv "github.com/IkhwanAL/a-redis/src"
 )
-
-func randomReplciateSeedId() string {
-	charset := "abcdefghijklmnopqrstuvwxyz0123456789"
-
-	random := rand.New(rand.NewSource(time.Now().UnixNano()))
-
-	randomId := make([]byte, 40)
-
-	for i := 0; i < 40; i++ {
-		randomId[i] = charset[random.Intn(len(charset))]
-	}
-
-	return string(randomId)
-}
 
 func main() {
 
@@ -35,11 +19,15 @@ func main() {
 
 	isAReplica := false
 
-	randomSeed := randomReplciateSeedId()
+	randomSeed := Srv.RandomReplciateSeedId()
 
 	fmt.Printf("Run Server %d\n", *port)
 
 	replica := Srv.NewReplication(randomSeed, *replicaOf, 0)
+
+	if replica.Role != Srv.MASTER {
+		replica.Run(context.Background())
+	}
 
 	s := Srv.Server{
 		Port: *port,
