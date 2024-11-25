@@ -16,7 +16,8 @@ import (
 var MaxBuffer int = 4096
 
 type Server struct {
-	Port int
+	Port          int
+	HashTableInfo map[string]int
 
 	Database Database
 	Config   map[string]interface{}
@@ -167,6 +168,7 @@ func (s *Server) runMessage(conn net.Conn, requests []byte, replica *Replication
 
 func (s *Server) Set(args []string) string {
 	s.Database.Set(args[0], args[1])
+	s.HashTableInfo["keyValues"] += 1
 
 	if len(args) > 2 && args[2] == "px" {
 		ttl, err := strconv.Atoi(args[3])
@@ -176,11 +178,11 @@ func (s *Server) Set(args []string) string {
 		}
 
 		t := time.Now()
+		s.HashTableInfo["withPx"] += 1
 
 		t = t.Add(time.Duration(ttl) * time.Millisecond)
 
-		s.Database.SetSetting(args[0], "EXPIRETM", t.Format(time.RFC3339))
-		s.Database.SetSetting(args[0], "TTL", ttl)
+		s.Database.SetSetting(args[0], "TTL", t)
 
 		go func() {
 			<-time.After(time.Duration(ttl) * time.Millisecond)

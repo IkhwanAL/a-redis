@@ -30,7 +30,8 @@ func main() {
 	}
 
 	s := Srv.Server{
-		Port: *port,
+		Port:          *port,
+		HashTableInfo: make(map[string]int),
 		Database: Srv.Database{
 			Data: make(map[string]map[string]interface{}),
 		},
@@ -41,9 +42,9 @@ func main() {
 	}
 
 	if !isAReplica {
-		Srv.Retreive(&s)
+		// Srv.Retreive(&s)
 
-		Srv.StoreRDB(&s)
+		Srv.StoreRDBFormat(&s)
 	}
 
 	s.Run(context.Background(), &replica)
