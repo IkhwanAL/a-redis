@@ -11,5 +11,5 @@ var STRING_DATATYPE_FLAG = '\x00'
 var START_METADATA = '\xFA'       // Auxiliary fields
 var START_DB_SECTION = '\xFF'     // Database Selector
 var START_HASHTABEL_INFO = '\xFB' // ResizeDB
-var HAS_EXPIRE = '\xFC'
 var EOF = '\xFF'
+var EXPIRETIMEMS = '\xFC'

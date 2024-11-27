@@ -85,11 +85,12 @@ func StoreRDBFormat(srv *Server) {
 
 	// -- Database Section Where Data is Exists
 	buffer.WriteByte(byte(START_DB_SECTION))
-	buffer.WriteByte(byte(00))
+	buffer.WriteByte(byte('\x00'))
 
 	buffer.WriteByte(byte(START_HASHTABEL_INFO))
-	buffer.WriteByte(byte(srv.HashTableInfo["keyValue"]))
-	buffer.WriteByte(byte(srv.HashTableInfo["withPx"]))
+
+	buffer.WriteByte(byte(srv.HashTableInfo["keyValue"])) //
+	buffer.WriteByte(byte(srv.HashTableInfo["withPx"]))   //
 
 	buffer.WriteByte(byte(STRING_DATATYPE_FLAG))
 
@@ -110,6 +111,17 @@ func StoreRDBFormat(srv *Server) {
 
 	for key, value := range srv.Database.Data {
 		buffer.WriteByte(byte(STRING_DATATYPE_FLAG))
+
+		ttl, ok := value["TTL"].(int64)
+
+		if ok {
+			buffer.WriteByte(byte(EXPIRETIMEMS))
+			timestampByte := make([]byte, 8)
+
+			binary.LittleEndian.PutUint64(timestampByte, uint64(ttl))
+
+			buffer.WriteString(hex.EncodeToString(timestampByte))
+		}
 
 		// No Validation because value is always exists
 		// if not there's a bug in store mechanism
