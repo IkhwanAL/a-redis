@@ -9,9 +9,9 @@ import (
 	"hash/crc64"
 	"io"
 	"log"
+	"math"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 )
 
@@ -33,6 +33,39 @@ func StoreRDB(srv *Server) {
 			}
 		}
 	}()
+}
+
+const MAX_UINT_6BITS = 1<<6 - 1
+const MAX_UINT_14BITS = 1<<14 - 1
+
+const MaskWith14BitsLengthHeader = 0b01 << 6
+
+func sizeBitMask(size int) []byte {
+	var buf []byte
+
+	if size < MAX_UINT_6BITS {
+		buf = make([]byte, 1)
+		buf[0] = byte(size)
+	}
+
+	if size >= MAX_UINT_6BITS && size < MAX_UINT_14BITS {
+		buf = make([]byte, 2)
+		buf[0] = byte(size>>8 | MaskWith14BitsLengthHeader)
+		buf[1] = byte(size)
+	}
+
+	if size >= MAX_UINT_14BITS && size < math.MaxInt32 {
+		buf = make([]byte, 5)
+		buf[0] = 0b10 << 6
+		binary.BigEndian.PutUint32(buf[1:], uint32(size))
+	}
+
+	return buf
+}
+
+func binaryWriteLengthEncoding(dst *bytes.Buffer, size int) {
+	val := sizeBitMask(size)
+	dst.Write(val)
 }
 
 func StoreRDBFormat(srv *Server) {
@@ -72,40 +105,28 @@ func StoreRDBFormat(srv *Server) {
 
 	defer file.Close()
 
-	var buffer strings.Builder
+	var buffer bytes.Buffer
 
 	// -- Header Section
-	buffer.WriteString(hex.EncodeToString(REDIS_MAGIC_NUMBER))
-	buffer.WriteString(hex.EncodeToString(REDIS_VERSION_NUMBER))
+	buffer.Write([]byte(hex.EncodeToString(REDIS_MAGIC_NUMBER)))
+	buffer.Write([]byte(hex.EncodeToString(REDIS_VERSION_NUMBER)))
 
 	// -- Metadata Section (We Can Add more in the future)
 	buffer.WriteByte(byte(START_METADATA))
-	buffer.WriteString(hex.EncodeToString([]byte("redis-ver")))
-	buffer.WriteString(hex.EncodeToString([]byte("6.0.16")))
+
+	binaryWriteLengthEncoding(&buffer, len("redis-ver"))
+	buffer.Write([]byte("redis-ver"))
+
+	binaryWriteLengthEncoding(&buffer, len("6.0.16"))
+	buffer.Write([]byte("6.0.16"))
 
 	// -- Database Section Where Data is Exists
 	buffer.WriteByte(byte(START_DB_SECTION))
-	buffer.WriteByte(byte('\x00'))
+	binaryWriteLengthEncoding(&buffer, 0)
 
 	buffer.WriteByte(byte(START_HASHTABEL_INFO))
-
-	buffer.WriteByte(byte(srv.HashTableInfo["keyValue"])) //
-	buffer.WriteByte(byte(srv.HashTableInfo["withPx"]))   //
-
-	buffer.WriteByte(byte(STRING_DATATYPE_FLAG))
-
-	var keys string
-	var values string
-
-	for key, value := range srv.Database.Data {
-		keys += key
-
-		v := value["VALUE"].(string)
-		values += v
-	}
-
-	buffer.WriteString(hex.EncodeToString([]byte(keys)))
-	buffer.WriteString(hex.EncodeToString([]byte(values)))
+	binaryWriteLengthEncoding(&buffer, srv.HashTableInfo["keyValue"])
+	binaryWriteLengthEncoding(&buffer, srv.HashTableInfo["withPx"])
 
 	// Skip The Key Expire Thing First
 
@@ -120,31 +141,35 @@ func StoreRDBFormat(srv *Server) {
 
 			binary.LittleEndian.PutUint64(timestampByte, uint64(ttl))
 
-			buffer.WriteString(hex.EncodeToString(timestampByte))
+			buffer.Write(timestampByte)
 		}
 
 		// No Validation because value is always exists
 		// if not there's a bug in store mechanism
 		v := value["VALUE"].(string)
 
-		buffer.WriteString(hex.EncodeToString([]byte(key)))
-		buffer.WriteString(hex.EncodeToString([]byte(v)))
+		// Key
+		binaryWriteLengthEncoding(&buffer, len(key))
+		buffer.Write([]byte(key))
+
+		binaryWriteLengthEncoding(&buffer, len(v))
+		buffer.Write([]byte(v))
 
 	}
 	buffer.WriteByte(byte(EOF))
 
 	table := crc64.MakeTable(crc64.ECMA)
 
-	checksum := crc64.Checksum([]byte(buffer.String()), table)
+	checksum := crc64.Checksum(buffer.Bytes(), table)
 
 	chs := make([]byte, 8)
 	binary.LittleEndian.PutUint64(chs, checksum)
 
-	buffer.WriteString(hex.EncodeToString(chs))
+	buffer.Write(chs)
 
 	bytesBuffer := new(bytes.Buffer)
 
-	binary.Write(bytesBuffer, binary.LittleEndian, []byte(buffer.String()))
+	binary.Write(bytesBuffer, binary.LittleEndian, buffer.Bytes())
 
 	_, err = bytesBuffer.WriteTo(file)
 

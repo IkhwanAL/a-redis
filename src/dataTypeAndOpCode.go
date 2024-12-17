@@ -9,7 +9,7 @@ var STRING_DATATYPE_FLAG = '\x00'
 
 // OpCode
 var START_METADATA = '\xFA'       // Auxiliary fields
-var START_DB_SECTION = '\xFF'     // Database Selector
+var START_DB_SECTION = '\xFE'     // Database Selector
 var START_HASHTABEL_INFO = '\xFB' // ResizeDB
 var EOF = '\xFF'
 var EXPIRETIMEMS = '\xFC'

@@ -182,7 +182,7 @@ func (s *Server) Set(args []string) string {
 
 		t = t.Add(time.Duration(ttl) * time.Millisecond)
 
-		s.Database.SetSetting(args[0], "TTL", t)
+		s.Database.SetSetting(args[0], "TTL", t.UnixMilli())
 
 		go func() {
 			<-time.After(time.Duration(ttl) * time.Millisecond)
