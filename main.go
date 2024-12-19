@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"strconv"
 
 	Srv "github.com/IkhwanAL/a-redis/src"
 )
@@ -16,6 +17,10 @@ func main() {
 	port := flag.Int("port", 6379, "port to connect")
 
 	flag.Parse()
+
+	i, _ := strconv.ParseInt("007", 10, 32)
+
+	fmt.Printf("%v\n", i)
 
 	isAReplica := false
 
@@ -47,5 +52,5 @@ func main() {
 		Srv.StoreRDBFormat(&s)
 	}
 
-	s.Run(context.Background(), &replica)
+	// s.Run(context.Background(), &replica)
 }

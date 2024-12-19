@@ -62,6 +62,32 @@ func sizeBitMask(size int) []byte {
 	return buf
 }
 
+func tryCompressIntegerOfString(s string) ([]byte, bool) {
+	value, err := IsStringCanBeEncodedAsUInteger(s)
+
+	if err != nil {
+		return nil, false
+	}
+
+	var buf []byte
+
+	// Start Special Encoding For String
+
+	if value > math.MinInt8 && value <= math.MaxInt8 {
+		encodedLength := byte(0b11 << 6)
+		encodedValue := byte(value)
+		buf = []byte{encodedLength, encodedValue}
+	}
+
+	// if value > math.MinInt16
+
+	return buf, true
+}
+
+// func compressString(s string) []byte {
+// 	tryCompressIntegerOfString()
+// }
+
 func binaryWriteLengthEncoding(dst *bytes.Buffer, size int) {
 	val := sizeBitMask(size)
 	dst.Write(val)
