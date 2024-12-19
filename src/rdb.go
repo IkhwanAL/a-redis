@@ -3,7 +3,6 @@ package src
 import (
 	"bytes"
 	"encoding/binary"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"hash/crc64"
@@ -108,8 +107,8 @@ func StoreRDBFormat(srv *Server) {
 	var buffer bytes.Buffer
 
 	// -- Header Section
-	buffer.Write([]byte(hex.EncodeToString(REDIS_MAGIC_NUMBER)))
-	buffer.Write([]byte(hex.EncodeToString(REDIS_VERSION_NUMBER)))
+	buffer.Write([]byte(REDIS_MAGIC_NUMBER))
+	buffer.Write([]byte(REDIS_VERSION_NUMBER))
 
 	// -- Metadata Section (We Can Add more in the future)
 	buffer.WriteByte(byte(START_METADATA))
