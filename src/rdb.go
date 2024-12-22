@@ -62,7 +62,7 @@ func sizeBitMask(size int) []byte {
 	return buf
 }
 
-func tryCompressIntegerOfString(s string) ([]byte, bool) {
+func tryEncodeIntegerOfString(s string) ([]byte, bool) {
 	value, err := IsStringCanBeEncodedAsUInteger(s)
 
 	if err != nil {
@@ -72,21 +72,36 @@ func tryCompressIntegerOfString(s string) ([]byte, bool) {
 	var buf []byte
 
 	// Start Special Encoding For String
-
 	if value > math.MinInt8 && value <= math.MaxInt8 {
+		// 1 Bytes / 8 Bit Integer Length
 		encodedLength := byte(0b11 << 6)
 		encodedValue := byte(value)
 		buf = []byte{encodedLength, encodedValue}
+	} else if value > math.MinInt16 && value <= math.MaxInt16 {
+		// 2 Bytes / 16 Bit Integer Length
+		buf = make([]byte, 3)
+		buf[0] = byte(0b11<<6 | 0b01)
+		binary.LittleEndian.PutUint16(buf[1:], uint16(value))
+	} else if value > math.MinInt32 && value <= math.MaxInt32 {
+		// 4 Bytes / 32 Bit Integer Length
+		buf = make([]byte, 5)
+		buf[0] = byte(0b11<<6 | 0b10)
+		binary.LittleEndian.PutUint32(buf[1:], uint32(value))
 	}
-
-	// if value > math.MinInt16
 
 	return buf, true
 }
 
-// func compressString(s string) []byte {
-// 	tryCompressIntegerOfString()
-// }
+func stringEncoding(dst *bytes.Buffer, s string) {
+	bytesVal, itCan := tryEncodeIntegerOfString(s)
+
+	if itCan {
+		dst.Write(bytesVal)
+		return
+	}
+
+	dst.WriteString(s)
+}
 
 func binaryWriteLengthEncoding(dst *bytes.Buffer, size int) {
 	val := sizeBitMask(size)
@@ -140,10 +155,10 @@ func StoreRDBFormat(srv *Server) {
 	buffer.WriteByte(byte(START_METADATA))
 
 	binaryWriteLengthEncoding(&buffer, len("redis-ver"))
-	buffer.Write([]byte("redis-ver"))
+	stringEncoding(&buffer, "redis-ver")
 
 	binaryWriteLengthEncoding(&buffer, len("6.0.16"))
-	buffer.Write([]byte("6.0.16"))
+	stringEncoding(&buffer, "6.0.16")
 
 	// -- Database Section Where Data is Exists
 	buffer.WriteByte(byte(START_DB_SECTION))
@@ -175,10 +190,10 @@ func StoreRDBFormat(srv *Server) {
 
 		// Key
 		binaryWriteLengthEncoding(&buffer, len(key))
-		buffer.Write([]byte(key))
+		stringEncoding(&buffer, key)
 
 		binaryWriteLengthEncoding(&buffer, len(v))
-		buffer.Write([]byte(v))
+		stringEncoding(&buffer, v)
 
 	}
 	buffer.WriteByte(byte(EOF))

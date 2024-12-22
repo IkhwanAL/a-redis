@@ -44,11 +44,11 @@ func IsStringCanBeEncodedAsUInteger(words string) (int64, error) {
 		}
 	}
 
-	intLength, err := strconv.ParseInt(words, 10, 64)
+	intValue, err := strconv.ParseInt(words, 10, 32)
 
 	if err != nil {
 		return 0, err
 	}
 
-	return intLength, nil
+	return intValue, nil
 }

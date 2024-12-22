@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
+	"encoding/binary"
 	"flag"
 	"fmt"
-	"strconv"
 
 	Srv "github.com/IkhwanAL/a-redis/src"
 )
@@ -18,9 +18,12 @@ func main() {
 
 	flag.Parse()
 
-	i, _ := strconv.ParseInt("007", 10, 32)
+	buf := make([]byte, 5)
 
-	fmt.Printf("%v\n", i)
+	buf[0] = byte(0b11<<6 | 0b10)
+	binary.LittleEndian.PutUint32(buf[1:], 2147483644)
+
+	fmt.Printf("%x\n", buf)
 
 	isAReplica := false
 
